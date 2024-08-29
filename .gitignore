@@ -1,0 +1,26 @@
+# Dependency directories
+/vendor/
+/node_modules/
+/venv/
+
+# Output files from Go
+*.exe
+*.out
+*.log
+
+# Configuration files
+.env
+.air.toml
+
+# Temporary files
+*.tmp
+/tmp/
+
+# macOS system files
+.DS_Store
+# Linux/Unix files
+.vscode/
+
+# Python bytecode
+__pycache__/
+*.py[cod]

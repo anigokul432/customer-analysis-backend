@@ -1,0 +1,17 @@
+type Feedback {
+  id: ID
+  productId: String
+  userId: String
+  profileName: String
+  helpfulnessNumerator: Int
+  helpfulnessDenominator: Int
+  score: Int
+  time: Int
+  summary: String
+  text: String
+}
+
+type Query {
+  feedbacks: [Feedback!]!
+  feedback(id: ID!): Feedback
+}
