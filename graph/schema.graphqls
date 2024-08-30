@@ -1,3 +1,5 @@
+# graph/schema.graphqls
+
 type Feedback {
   id: ID
   productId: String
@@ -9,9 +11,38 @@ type Feedback {
   time: Int
   summary: String
   text: String
+  product: Product # Simulated Product based on ProductId
+  user: User # Simulated User based on UserId and ProfileName
+}
+
+type User {
+  id: ID
+  name: String
+  feedbacks: [Feedback] # Feedbacks by this user
+}
+
+type Product {
+  id: ID
+  feedbacks: [Feedback] # Feedbacks for this product
+}
+
+type FeedbackCountByScore {
+  score: Int!
+  count: Int!
 }
 
 type Query {
   feedbacks: [Feedback!]!
   feedback(id: ID!): Feedback
+  feedbacksByProduct(productId: String!): [Feedback!]! 
+  feedbacksByUser(userId: String!): [Feedback!]! 
+  productsWithFeedbacks: [Product!]! 
+  feedbacksByScoreRange(minScore: Int!, maxScore: Int!): [Feedback!]!
+  feedbacksByKeyword(keyword: String!): [Feedback!]!
+  averageScoreByProduct(productId: String!): Float!
+  feedbackCountByScore: [FeedbackCountByScore!]!
+  feedbacksByDateRange(startDate: Int!, endDate: Int!): [Feedback!]!
+  feedbacksByHelpfulnessRatio(minRatio: Float!): [Feedback!]!
+  recentFeedbacks(limit: Int!): [Feedback!]!
+
 }

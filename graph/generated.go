@@ -50,24 +50,62 @@ type ComplexityRoot struct {
 		HelpfulnessDenominator func(childComplexity int) int
 		HelpfulnessNumerator   func(childComplexity int) int
 		ID                     func(childComplexity int) int
+		Product                func(childComplexity int) int
 		ProductID              func(childComplexity int) int
 		ProfileName            func(childComplexity int) int
 		Score                  func(childComplexity int) int
 		Summary                func(childComplexity int) int
 		Text                   func(childComplexity int) int
 		Time                   func(childComplexity int) int
+		User                   func(childComplexity int) int
 		UserID                 func(childComplexity int) int
 	}
 
-	Query struct {
-		Feedback  func(childComplexity int, id string) int
+	FeedbackCountByScore struct {
+		Count func(childComplexity int) int
+		Score func(childComplexity int) int
+	}
+
+	Product struct {
 		Feedbacks func(childComplexity int) int
+		ID        func(childComplexity int) int
+	}
+
+	Query struct {
+		AverageScoreByProduct       func(childComplexity int, productID string) int
+		Feedback                    func(childComplexity int, id string) int
+		FeedbackCountByScore        func(childComplexity int) int
+		Feedbacks                   func(childComplexity int) int
+		FeedbacksByDateRange        func(childComplexity int, startDate int, endDate int) int
+		FeedbacksByHelpfulnessRatio func(childComplexity int, minRatio float64) int
+		FeedbacksByKeyword          func(childComplexity int, keyword string) int
+		FeedbacksByProduct          func(childComplexity int, productID string) int
+		FeedbacksByScoreRange       func(childComplexity int, minScore int, maxScore int) int
+		FeedbacksByUser             func(childComplexity int, userID string) int
+		ProductsWithFeedbacks       func(childComplexity int) int
+		RecentFeedbacks             func(childComplexity int, limit int) int
+	}
+
+	User struct {
+		Feedbacks func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
 	}
 }
 
 type QueryResolver interface {
 	Feedbacks(ctx context.Context) ([]*model.Feedback, error)
 	Feedback(ctx context.Context, id string) (*model.Feedback, error)
+	FeedbacksByProduct(ctx context.Context, productID string) ([]*model.Feedback, error)
+	FeedbacksByUser(ctx context.Context, userID string) ([]*model.Feedback, error)
+	ProductsWithFeedbacks(ctx context.Context) ([]*model.Product, error)
+	FeedbacksByScoreRange(ctx context.Context, minScore int, maxScore int) ([]*model.Feedback, error)
+	FeedbacksByKeyword(ctx context.Context, keyword string) ([]*model.Feedback, error)
+	AverageScoreByProduct(ctx context.Context, productID string) (float64, error)
+	FeedbackCountByScore(ctx context.Context) ([]*model.FeedbackCountByScore, error)
+	FeedbacksByDateRange(ctx context.Context, startDate int, endDate int) ([]*model.Feedback, error)
+	FeedbacksByHelpfulnessRatio(ctx context.Context, minRatio float64) ([]*model.Feedback, error)
+	RecentFeedbacks(ctx context.Context, limit int) ([]*model.Feedback, error)
 }
 
 type executableSchema struct {
@@ -109,6 +147,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Feedback.ID(childComplexity), true
+
+	case "Feedback.product":
+		if e.complexity.Feedback.Product == nil {
+			break
+		}
+
+		return e.complexity.Feedback.Product(childComplexity), true
 
 	case "Feedback.productId":
 		if e.complexity.Feedback.ProductID == nil {
@@ -152,12 +197,59 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Feedback.Time(childComplexity), true
 
+	case "Feedback.user":
+		if e.complexity.Feedback.User == nil {
+			break
+		}
+
+		return e.complexity.Feedback.User(childComplexity), true
+
 	case "Feedback.userId":
 		if e.complexity.Feedback.UserID == nil {
 			break
 		}
 
 		return e.complexity.Feedback.UserID(childComplexity), true
+
+	case "FeedbackCountByScore.count":
+		if e.complexity.FeedbackCountByScore.Count == nil {
+			break
+		}
+
+		return e.complexity.FeedbackCountByScore.Count(childComplexity), true
+
+	case "FeedbackCountByScore.score":
+		if e.complexity.FeedbackCountByScore.Score == nil {
+			break
+		}
+
+		return e.complexity.FeedbackCountByScore.Score(childComplexity), true
+
+	case "Product.feedbacks":
+		if e.complexity.Product.Feedbacks == nil {
+			break
+		}
+
+		return e.complexity.Product.Feedbacks(childComplexity), true
+
+	case "Product.id":
+		if e.complexity.Product.ID == nil {
+			break
+		}
+
+		return e.complexity.Product.ID(childComplexity), true
+
+	case "Query.averageScoreByProduct":
+		if e.complexity.Query.AverageScoreByProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Query_averageScoreByProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AverageScoreByProduct(childComplexity, args["productId"].(string)), true
 
 	case "Query.feedback":
 		if e.complexity.Query.Feedback == nil {
@@ -171,12 +263,131 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Feedback(childComplexity, args["id"].(string)), true
 
+	case "Query.feedbackCountByScore":
+		if e.complexity.Query.FeedbackCountByScore == nil {
+			break
+		}
+
+		return e.complexity.Query.FeedbackCountByScore(childComplexity), true
+
 	case "Query.feedbacks":
 		if e.complexity.Query.Feedbacks == nil {
 			break
 		}
 
 		return e.complexity.Query.Feedbacks(childComplexity), true
+
+	case "Query.feedbacksByDateRange":
+		if e.complexity.Query.FeedbacksByDateRange == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByDateRange_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByDateRange(childComplexity, args["startDate"].(int), args["endDate"].(int)), true
+
+	case "Query.feedbacksByHelpfulnessRatio":
+		if e.complexity.Query.FeedbacksByHelpfulnessRatio == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByHelpfulnessRatio_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByHelpfulnessRatio(childComplexity, args["minRatio"].(float64)), true
+
+	case "Query.feedbacksByKeyword":
+		if e.complexity.Query.FeedbacksByKeyword == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByKeyword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByKeyword(childComplexity, args["keyword"].(string)), true
+
+	case "Query.feedbacksByProduct":
+		if e.complexity.Query.FeedbacksByProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByProduct(childComplexity, args["productId"].(string)), true
+
+	case "Query.feedbacksByScoreRange":
+		if e.complexity.Query.FeedbacksByScoreRange == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByScoreRange_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByScoreRange(childComplexity, args["minScore"].(int), args["maxScore"].(int)), true
+
+	case "Query.feedbacksByUser":
+		if e.complexity.Query.FeedbacksByUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_feedbacksByUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeedbacksByUser(childComplexity, args["userId"].(string)), true
+
+	case "Query.productsWithFeedbacks":
+		if e.complexity.Query.ProductsWithFeedbacks == nil {
+			break
+		}
+
+		return e.complexity.Query.ProductsWithFeedbacks(childComplexity), true
+
+	case "Query.recentFeedbacks":
+		if e.complexity.Query.RecentFeedbacks == nil {
+			break
+		}
+
+		args, err := ec.field_Query_recentFeedbacks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.RecentFeedbacks(childComplexity, args["limit"].(int)), true
+
+	case "User.feedbacks":
+		if e.complexity.User.Feedbacks == nil {
+			break
+		}
+
+		return e.complexity.User.Feedbacks(childComplexity), true
+
+	case "User.id":
+		if e.complexity.User.ID == nil {
+			break
+		}
+
+		return e.complexity.User.ID(childComplexity), true
+
+	case "User.name":
+		if e.complexity.User.Name == nil {
+			break
+		}
+
+		return e.complexity.User.Name(childComplexity), true
 
 	}
 	return 0, false
@@ -301,6 +512,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_averageScoreByProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["productId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["productId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_feedback_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -313,6 +539,129 @@ func (ec *executionContext) field_Query_feedback_args(ctx context.Context, rawAr
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByDateRange_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["startDate"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["startDate"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["endDate"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["endDate"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByHelpfulnessRatio_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 float64
+	if tmp, ok := rawArgs["minRatio"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minRatio"))
+		arg0, err = ec.unmarshalNFloat2float64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["minRatio"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByKeyword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["keyword"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyword"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["keyword"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["productId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["productId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByScoreRange_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["minScore"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minScore"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["minScore"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["maxScore"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxScore"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["maxScore"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_feedbacksByUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_recentFeedbacks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg0
 	return args, nil
 }
 
@@ -764,6 +1113,298 @@ func (ec *executionContext) fieldContext_Feedback_text(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Feedback_product(ctx context.Context, field graphql.CollectedField, obj *model.Feedback) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Feedback_product(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Product, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Product)
+	fc.Result = res
+	return ec.marshalOProduct2ᚖgogingraphqlegᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Feedback_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Feedback",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "feedbacks":
+				return ec.fieldContext_Product_feedbacks(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Feedback_user(ctx context.Context, field graphql.CollectedField, obj *model.Feedback) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Feedback_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgogingraphqlegᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Feedback_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Feedback",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "name":
+				return ec.fieldContext_User_name(ctx, field)
+			case "feedbacks":
+				return ec.fieldContext_User_feedbacks(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FeedbackCountByScore_score(ctx context.Context, field graphql.CollectedField, obj *model.FeedbackCountByScore) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FeedbackCountByScore_score(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Score, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FeedbackCountByScore_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FeedbackCountByScore",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FeedbackCountByScore_count(ctx context.Context, field graphql.CollectedField, obj *model.FeedbackCountByScore) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FeedbackCountByScore_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FeedbackCountByScore_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FeedbackCountByScore",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_id(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_feedbacks(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_feedbacks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Feedbacks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalOFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedback(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_feedbacks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_feedbacks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_feedbacks(ctx, field)
 	if err != nil {
@@ -823,6 +1464,10 @@ func (ec *executionContext) fieldContext_Query_feedbacks(_ context.Context, fiel
 				return ec.fieldContext_Feedback_summary(ctx, field)
 			case "text":
 				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
 		},
@@ -886,6 +1531,10 @@ func (ec *executionContext) fieldContext_Query_feedback(ctx context.Context, fie
 				return ec.fieldContext_Feedback_summary(ctx, field)
 			case "text":
 				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
 		},
@@ -898,6 +1547,728 @@ func (ec *executionContext) fieldContext_Query_feedback(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_feedback_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByProduct(rctx, fc.Args["productId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByUser(rctx, fc.Args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_productsWithFeedbacks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_productsWithFeedbacks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProductsWithFeedbacks(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_productsWithFeedbacks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "feedbacks":
+				return ec.fieldContext_Product_feedbacks(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByScoreRange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByScoreRange(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByScoreRange(rctx, fc.Args["minScore"].(int), fc.Args["maxScore"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByScoreRange(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByScoreRange_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByKeyword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByKeyword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByKeyword(rctx, fc.Args["keyword"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByKeyword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByKeyword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_averageScoreByProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_averageScoreByProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AverageScoreByProduct(rctx, fc.Args["productId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_averageScoreByProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_averageScoreByProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbackCountByScore(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbackCountByScore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbackCountByScore(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.FeedbackCountByScore)
+	fc.Result = res
+	return ec.marshalNFeedbackCountByScore2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackCountByScoreᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbackCountByScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "score":
+				return ec.fieldContext_FeedbackCountByScore_score(ctx, field)
+			case "count":
+				return ec.fieldContext_FeedbackCountByScore_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FeedbackCountByScore", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByDateRange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByDateRange(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByDateRange(rctx, fc.Args["startDate"].(int), fc.Args["endDate"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByDateRange(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByDateRange_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_feedbacksByHelpfulnessRatio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_feedbacksByHelpfulnessRatio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeedbacksByHelpfulnessRatio(rctx, fc.Args["minRatio"].(float64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_feedbacksByHelpfulnessRatio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_feedbacksByHelpfulnessRatio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_recentFeedbacks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_recentFeedbacks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RecentFeedbacks(rctx, fc.Args["limit"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalNFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_recentFeedbacks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_recentFeedbacks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1028,6 +2399,155 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_feedbacks(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_feedbacks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Feedbacks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Feedback)
+	fc.Result = res
+	return ec.marshalOFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedback(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_feedbacks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Feedback_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_Feedback_productId(ctx, field)
+			case "userId":
+				return ec.fieldContext_Feedback_userId(ctx, field)
+			case "profileName":
+				return ec.fieldContext_Feedback_profileName(ctx, field)
+			case "helpfulnessNumerator":
+				return ec.fieldContext_Feedback_helpfulnessNumerator(ctx, field)
+			case "helpfulnessDenominator":
+				return ec.fieldContext_Feedback_helpfulnessDenominator(ctx, field)
+			case "score":
+				return ec.fieldContext_Feedback_score(ctx, field)
+			case "time":
+				return ec.fieldContext_Feedback_time(ctx, field)
+			case "summary":
+				return ec.fieldContext_Feedback_summary(ctx, field)
+			case "text":
+				return ec.fieldContext_Feedback_text(ctx, field)
+			case "product":
+				return ec.fieldContext_Feedback_product(ctx, field)
+			case "user":
+				return ec.fieldContext_Feedback_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Feedback", field.Name)
 		},
 	}
 	return fc, nil
@@ -2845,6 +4365,92 @@ func (ec *executionContext) _Feedback(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Feedback_summary(ctx, field, obj)
 		case "text":
 			out.Values[i] = ec._Feedback_text(ctx, field, obj)
+		case "product":
+			out.Values[i] = ec._Feedback_product(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._Feedback_user(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var feedbackCountByScoreImplementors = []string{"FeedbackCountByScore"}
+
+func (ec *executionContext) _FeedbackCountByScore(ctx context.Context, sel ast.SelectionSet, obj *model.FeedbackCountByScore) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, feedbackCountByScoreImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FeedbackCountByScore")
+		case "score":
+			out.Values[i] = ec._FeedbackCountByScore_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._FeedbackCountByScore_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var productImplementors = []string{"Product"}
+
+func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, obj *model.Product) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Product")
+		case "id":
+			out.Values[i] = ec._Product_id(ctx, field, obj)
+		case "feedbacks":
+			out.Values[i] = ec._Product_feedbacks(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2928,6 +4534,226 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByProduct":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByProduct(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByUser":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByUser(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "productsWithFeedbacks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_productsWithFeedbacks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByScoreRange":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByScoreRange(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByKeyword":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByKeyword(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "averageScoreByProduct":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_averageScoreByProduct(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbackCountByScore":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbackCountByScore(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByDateRange":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByDateRange(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "feedbacksByHelpfulnessRatio":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_feedbacksByHelpfulnessRatio(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "recentFeedbacks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recentFeedbacks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -2936,6 +4762,46 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var userImplementors = []string{"User"}
+
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("User")
+		case "id":
+			out.Values[i] = ec._User_id(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._User_name(ctx, field, obj)
+		case "feedbacks":
+			out.Values[i] = ec._User_feedbacks(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3354,6 +5220,75 @@ func (ec *executionContext) marshalNFeedback2ᚖgogingraphqlegᚋgraphᚋmodel�
 	return ec._Feedback(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNFeedbackCountByScore2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackCountByScoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FeedbackCountByScore) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFeedbackCountByScore2ᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackCountByScore(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFeedbackCountByScore2ᚖgogingraphqlegᚋgraphᚋmodelᚐFeedbackCountByScore(ctx context.Context, sel ast.SelectionSet, v *model.FeedbackCountByScore) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FeedbackCountByScore(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3367,6 +5302,75 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNProduct2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProduct2ᚖgogingraphqlegᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProduct2ᚖgogingraphqlegᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Product(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3663,6 +5667,47 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOFeedback2ᚕᚖgogingraphqlegᚋgraphᚋmodelᚐFeedback(ctx context.Context, sel ast.SelectionSet, v []*model.Feedback) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOFeedback2ᚖgogingraphqlegᚋgraphᚋmodelᚐFeedback(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalOFeedback2ᚖgogingraphqlegᚋgraphᚋmodelᚐFeedback(ctx context.Context, sel ast.SelectionSet, v *model.Feedback) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3702,6 +5747,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) marshalOProduct2ᚖgogingraphqlegᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Product(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -3716,6 +5768,13 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOUser2ᚖgogingraphqlegᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

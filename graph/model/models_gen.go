@@ -3,17 +3,35 @@
 package model
 
 type Feedback struct {
-	ID                     *string `json:"id,omitempty"`
-	ProductID              *string `json:"productId,omitempty"`
-	UserID                 *string `json:"userId,omitempty"`
-	ProfileName            *string `json:"profileName,omitempty"`
-	HelpfulnessNumerator   *int    `json:"helpfulnessNumerator,omitempty"`
-	HelpfulnessDenominator *int    `json:"helpfulnessDenominator,omitempty"`
-	Score                  *int    `json:"score,omitempty"`
-	Time                   *int    `json:"time,omitempty"`
-	Summary                *string `json:"summary,omitempty"`
-	Text                   *string `json:"text,omitempty"`
+	ID                     *string  `json:"id,omitempty"`
+	ProductID              *string  `json:"productId,omitempty"`
+	UserID                 *string  `json:"userId,omitempty"`
+	ProfileName            *string  `json:"profileName,omitempty"`
+	HelpfulnessNumerator   *int     `json:"helpfulnessNumerator,omitempty"`
+	HelpfulnessDenominator *int     `json:"helpfulnessDenominator,omitempty"`
+	Score                  *int     `json:"score,omitempty"`
+	Time                   *int     `json:"time,omitempty"`
+	Summary                *string  `json:"summary,omitempty"`
+	Text                   *string  `json:"text,omitempty"`
+	Product                *Product `json:"product,omitempty"`
+	User                   *User    `json:"user,omitempty"`
+}
+
+type FeedbackCountByScore struct {
+	Score int `json:"score"`
+	Count int `json:"count"`
+}
+
+type Product struct {
+	ID        *string     `json:"id,omitempty"`
+	Feedbacks []*Feedback `json:"feedbacks,omitempty"`
 }
 
 type Query struct {
+}
+
+type User struct {
+	ID        *string     `json:"id,omitempty"`
+	Name      *string     `json:"name,omitempty"`
+	Feedbacks []*Feedback `json:"feedbacks,omitempty"`
 }
